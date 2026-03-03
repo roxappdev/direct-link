@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P File Share - Direct Peer-to-Peer File Transfer</title>
+    <link rel="stylesheet" href="./public/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-share-alt"></i> P2P File Share</h1>
+            <p class="subtitle">One‑click direct file transfer between computers. No server storage, fully peer‑to‑peer.</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2><i class="fas fa-link"></i> Create a Share Link</h2>
+                <p>Generate a unique link and send it to the recipient. Once they open it, a direct connection will be established.</p>
+                <button id="createRoomBtn" class="btn primary">
+                    <i class="fas fa-plus-circle"></i> Generate Link
+                </button>
+                <div id="roomInfo" class="hidden">
+                    <p>Your share link:</p>
+                    <div class="link-box">
+                        <input type="text" id="roomLink" readonly>
+                        <button id="copyLinkBtn" class="btn icon" title="Copy">
+                            <i class="far fa-copy"></i>
+                        </button>
+                        <button id="shareBtn" class="btn icon" title="Share via WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </div>
+                    <p class="small">Send this link to the person you want to share files with. Waiting for peer to join…</p>
+                    <div class="status waiting">
+                        <i class="fas fa-hourglass-half"></i> <span id="statusText">Waiting for connection</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-user-plus"></i> Join a Share</h2>
+                <p>If you received a link, paste it below to join the peer‑to‑peer session.</p>
+                <div class="input-group">
+                    <input type="text" id="roomIdInput" placeholder="e.g. a1b2c3d4">
+                    <button id="joinRoomBtn" class="btn secondary">
+                        <i class="fas fa-sign-in-alt"></i> Join
+                    </button>
+                </div>
+                <div id="joinStatus" class="hidden">
+                    <div class="status connecting">
+                        <i class="fas fa-sync-alt fa-spin"></i> Connecting to peer…
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-file-import"></i> Send Files</h2>
+                <p>Select files to send directly to the connected peer. Files are transferred over a secure WebRTC channel.</p>
+                <div class="file-upload">
+                    <input type="file" id="fileInput" multiple>
+                    <label for="fileInput" class="btn upload">
+                        <i class="fas fa-cloud-upload-alt"></i> Choose Files
+                    </label>
+                    <button id="sendFilesBtn" class="btn primary" disabled>
+                        <i class="fas fa-paper-plane"></i> Send Selected Files
+                    </button>
+                </div>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-exchange-alt"></i> Connection Status</h2>
+                <div class="connection-info">
+                    <div class="info-row">
+                        <span>Peer ID:</span>
+                        <span id="peerId">Not connected</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Channel:</span>
+                        <span id="channelStatus" class="badge offline">Offline</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Files transferred:</span>
+                        <span id="filesTransferred">0</span>
+                    </div>
+                </div>
+                <div class="progress-container hidden">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-inbox"></i> Received Files</h2>
+                <p>Files sent by the peer will appear here. They are saved directly to your computer.</p>
+                <div id="receivedFiles" class="received-list">
+                    <p class="empty">No files received yet.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>
+                <i class="fas fa-info-circle"></i>
+                This service uses WebRTC for direct browser‑to‑browser transfer. No files are stored on any server.
+                Works in modern browsers (Chrome, Firefox, Edge, Safari).
+            </p>
+            <p class="copyright">
+                &copy; 2023 P2P File Share | Made with <i class="fas fa-heart"></i> for seamless sharing
+            </p>
+        </footer>
+    </div>
+
+    <script src="./public/socket.io/socket.io.js"></script>
+    <script src="./public/js/webrtc.js"></script>
+    <script src="./public/js/app.js"></script>
+</body>
+</html>

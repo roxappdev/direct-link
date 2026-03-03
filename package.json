@@ -1,0 +1,21 @@
+{
+  "name": "p2p-file-share",
+  "version": "1.0.0",
+  "description": "One-click peer-to-peer file sharing via unique links",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "keywords": ["webrtc", "p2p", "file-sharing"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
