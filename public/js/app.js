@@ -1,8 +1,8 @@
-// Main application
+// Main application with PeerJS
 document.addEventListener('DOMContentLoaded', () => {
-    const socket = io();
-    let webrtc = null;
-    let currentRoom = null;
+    let peer = null;
+    let conn = null;
+    let currentPeerId = null;
     let selectedFiles = [];
     let filesTransferred = 0;
 
@@ -75,20 +75,197 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    // Initialize Peer
+    function initPeer(peerId = null) {
+        if (peer) peer.destroy();
+        peer = new Peer(peerId, {
+            host: '0.peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true,
+            debug: 2
+        });
+
+        peer.on('open', (id) => {
+            console.log('My peer ID is: ' + id);
+            currentPeerId = id;
+            peerIdEl.textContent = id;
+        });
+
+        peer.on('connection', (connection) => {
+            console.log('Incoming connection from ' + connection.peer);
+            handleConnection(connection);
+        });
+
+        peer.on('error', (err) => {
+            console.error('Peer error:', err);
+            alert('PeerJS error: ' + err.message);
+        });
+    }
+
+    // Handle data connection
+    function handleConnection(connection) {
+        conn = connection;
+        conn.on('open', () => {
+            console.log('Data connection opened with ' + conn.peer);
+            updateConnectionStatus(true, conn.peer);
+            statusText.textContent = 'Ready to send files!';
+        });
+        conn.on('data', (data) => {
+            handleIncomingData(data);
+        });
+        conn.on('close', () => {
+            console.log('Connection closed');
+            updateConnectionStatus(false);
+            alert('Peer disconnected.');
+            conn = null;
+        });
+        conn.on('error', (err) => {
+            console.error('Connection error:', err);
+        });
+    }
+
+    // Handle incoming data (file metadata or chunks)
+    let receivingFile = null;
+    let receivedChunks = [];
+    let receivedSize = 0;
+
+    function handleIncomingData(data) {
+        if (typeof data === 'string') {
+            try {
+                const msg = JSON.parse(data);
+                if (msg.type === 'file-meta') {
+                    receivingFile = {
+                        name: msg.name,
+                        size: msg.size,
+                        mime: msg.mime,
+                        receivedSize: 0,
+                        chunks: []
+                    };
+                    receivedChunks = [];
+                    receivedSize = 0;
+                    console.log('Receiving file:', receivingFile.name);
+                    addReceivedFile(receivingFile.name, receivingFile.size);
+                } else if (msg.type === 'file-end') {
+                    if (receivingFile) {
+                        // Finalize file
+                        const blob = new Blob(receivedChunks, { type: receivingFile.mime });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = receivingFile.name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        console.log('File downloaded:', receivingFile.name);
+                        receivingFile = null;
+                        receivedChunks = [];
+                    }
+                }
+            } catch (e) {
+                console.log('Text message:', data);
+            }
+        } else if (data instanceof ArrayBuffer) {
+            // Binary chunk
+            if (receivingFile) {
+                receivedChunks.push(data);
+                receivedSize += data.byteLength;
+                const percent = receivingFile.size ? (receivedSize / receivingFile.size) * 100 : 0;
+                showProgress(percent);
+                if (receivedSize >= receivingFile.size) {
+                    // Already handled by file-end
+                }
+            }
+        }
+    }
+
+    // Send file metadata
+    function sendFileMetadata(file) {
+        if (!conn || !conn.open) {
+            alert('Not connected to a peer.');
+            return;
+        }
+        const metadata = {
+            type: 'file-meta',
+            name: file.name,
+            size: file.size,
+            mime: file.type,
+            lastModified: file.lastModified
+        };
+        conn.send(JSON.stringify(metadata));
+    }
+
+    // Send file in chunks
+    function sendFile(file) {
+        return new Promise((resolve, reject) => {
+            const chunkSize = 16 * 1024; // 16KB
+            const reader = new FileReader();
+            let offset = 0;
+
+            const readNext = () => {
+                const slice = file.slice(offset, offset + chunkSize);
+                reader.readAsArrayBuffer(slice);
+            };
+
+            reader.onload = (event) => {
+                const chunk = event.target.result;
+                conn.send(chunk);
+                offset += chunk.byteLength;
+                const percent = file.size ? (offset / file.size) * 100 : 0;
+                showProgress(percent);
+
+                if (offset < file.size) {
+                    setTimeout(readNext, 0);
+                } else {
+                    // Send end marker
+                    conn.send(JSON.stringify({ type: 'file-end' }));
+                    resolve();
+                }
+            };
+
+            reader.onerror = reject;
+            readNext();
+        });
+    }
+
     // Create room
     createRoomBtn.addEventListener('click', () => {
-        socket.emit('create-room');
+        initPeer(); // random ID
+        roomInfo.classList.remove('hidden');
+        statusText.textContent = 'Waiting for peer to join…';
+        peerIdEl.textContent = 'Generating ID...';
+        peer.on('open', (id) => {
+            const url = `${window.location.origin}${window.location.pathname}?room=${id}`;
+            roomLink.value = url;
+            peerIdEl.textContent = id;
+        });
     });
 
     // Join room
     joinRoomBtn.addEventListener('click', () => {
-        const roomId = roomIdInput.value.trim();
-        if (!roomId) {
-            alert('Please enter a room ID');
+        const peerId = roomIdInput.value.trim();
+        if (!peerId) {
+            alert('Please enter a peer ID');
             return;
         }
-        socket.emit('join-room', roomId);
+        initPeer(); // we need our own peer ID
         joinStatus.classList.remove('hidden');
+        peer.on('open', (myId) => {
+            console.log('Connecting to ' + peerId);
+            const connection = peer.connect(peerId, {
+                reliable: true
+            });
+            connection.on('open', () => {
+                joinStatus.classList.add('hidden');
+                handleConnection(connection);
+                alert(`Connected to peer ${peerId}`);
+            });
+            connection.on('error', (err) => {
+                alert('Connection failed: ' + err.message);
+                joinStatus.classList.add('hidden');
+            });
+        });
     });
 
     // Copy link
@@ -139,15 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Send files
     sendFilesBtn.addEventListener('click', async () => {
-        if (!webrtc || !webrtc.dataChannel || webrtc.dataChannel.readyState !== 'open') {
+        if (!conn || !conn.open) {
             alert('Not connected to a peer. Please wait for connection.');
             return;
         }
         for (const file of selectedFiles) {
             try {
-                webrtc.sendFileMetadata(file);
+                sendFileMetadata(file);
                 showProgress(0);
-                await webrtc.sendFile(file);
+                await sendFile(file);
                 updateFilesTransferred(filesTransferred + 1);
                 hideProgress();
             } catch (err) {
@@ -160,108 +337,14 @@ document.addEventListener('DOMContentLoaded', () => {
         sendFilesBtn.disabled = true;
     });
 
-    // Socket events
-    socket.on('room-created', (roomId) => {
-        currentRoom = roomId;
-        const url = `${window.location.origin}/?room=${roomId}`;
-        roomLink.value = url;
-        roomInfo.classList.remove('hidden');
-        statusText.textContent = 'Waiting for peer to join…';
-        peerIdEl.textContent = 'Waiting…';
-    });
-
-    socket.on('room-joined', (roomId) => {
-        currentRoom = roomId;
-        joinStatus.classList.add('hidden');
-        alert(`Joined room ${roomId}. Establishing peer connection...`);
-    });
-
-    socket.on('peer-joined', (peerId) => {
-        console.log('Peer joined:', peerId);
-        statusText.textContent = 'Peer joined, negotiating connection...';
-        // Initialize WebRTC as offerer
-        webrtc = new WebRTCManager(socket);
-        webrtc.init(peerId);
-        webrtc.onConnectionStateChange = (state) => {
-            console.log('Connection state:', state);
-            if (state === 'connected') {
-                updateConnectionStatus(true, peerId);
-            }
-        };
-        webrtc.onDataChannelStateChange = (state) => {
-            console.log('Data channel state:', state);
-            if (state === 'open') {
-                updateConnectionStatus(true, peerId);
-                statusText.textContent = 'Ready to send files!';
-            }
-        };
-        webrtc.onFileReceived = (fileMeta) => {
-            console.log('Receiving file:', fileMeta.name);
-            addReceivedFile(fileMeta.name, fileMeta.size);
-        };
-        webrtc.onProgress = (loaded, total) => {
-            const percent = total ? (loaded / total) * 100 : 0;
-            showProgress(percent);
-        };
-
-        // Create offer
-        webrtc.createOffer().then(offer => {
-            socket.emit('signal', { to: peerId, signal: offer });
-        });
-    });
-
-    socket.on('signal', async ({ from, signal }) => {
-        if (!webrtc) {
-            // We are the answerer
-            webrtc = new WebRTCManager(socket);
-            webrtc.init(from);
-            webrtc.onConnectionStateChange = (state) => {
-                if (state === 'connected') {
-                    updateConnectionStatus(true, from);
-                }
-            };
-            webrtc.onDataChannelStateChange = (state) => {
-                if (state === 'open') {
-                    updateConnectionStatus(true, from);
-                    statusText.textContent = 'Ready to send files!';
-                }
-            };
-            webrtc.onFileReceived = (fileMeta) => {
-                addReceivedFile(fileMeta.name, fileMeta.size);
-            };
-            webrtc.onProgress = (loaded, total) => {
-                const percent = total ? (loaded / total) * 100 : 0;
-                showProgress(percent);
-            };
-        }
-
-        if (signal.type === 'offer') {
-            await webrtc.setRemoteDescription(signal);
-            const answer = await webrtc.createAnswer();
-            socket.emit('signal', { to: from, signal: answer });
-        } else if (signal.type === 'answer') {
-            await webrtc.setRemoteDescription(signal);
-        } else if (signal.type === 'candidate') {
-            await webrtc.addIceCandidate(signal.candidate);
-        }
-    });
-
-    socket.on('error', (msg) => {
-        alert('Error: ' + msg);
-    });
-
-    socket.on('peer-left', (peerId) => {
-        alert(`Peer ${peerId} disconnected.`);
-        updateConnectionStatus(false);
-        if (webrtc) webrtc.close();
-        webrtc = null;
-    });
-
     // Check URL for room parameter
     const urlParams = new URLSearchParams(window.location.search);
     const roomParam = urlParams.get('room');
     if (roomParam) {
         roomIdInput.value = roomParam;
-        joinRoomBtn.click();
+        // Auto-join after a short delay to allow peer initialization
+        setTimeout(() => {
+            joinRoomBtn.click();
+        }, 500);
     }
 });
