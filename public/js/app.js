@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             statusText.textContent = 'Ready to send files!';
         });
         conn.on('data', (data) => {
-            handleIncomingData(data);
+            handleIncomingData(data).catch(err => console.error('Error handling incoming data:', err));
         });
         conn.on('close', () => {
             console.log('Connection closed');
@@ -129,8 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let receivingFile = null;
     let receivedChunks = [];
     let receivedSize = 0;
+    let fileHandle = null;
+    let fileWriter = null;
+    let fileStream = null;
 
-    function handleIncomingData(data) {
+    async function handleIncomingData(data) {
         if (typeof data === 'string') {
             try {
                 const msg = JSON.parse(data);
@@ -146,21 +149,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     receivedSize = 0;
                     console.log('Receiving file:', receivingFile.name);
                     addReceivedFile(receivingFile.name, receivingFile.size);
+
+                    // Try to initiate streaming download via File System Access API
+                    if ('showSaveFilePicker' in window) {
+                        try {
+                            fileHandle = await window.showSaveFilePicker({
+                                suggestedName: receivingFile.name,
+                                types: [{
+                                    description: 'File',
+                                    accept: { [receivingFile.mime || 'application/octet-stream']: ['*'] }
+                                }]
+                            });
+                            fileStream = await fileHandle.createWritable();
+                            fileWriter = fileStream.getWriter();
+                            console.log('Streaming download started for', receivingFile.name);
+                        } catch (err) {
+                            console.warn('File System Access API not available or user canceled:', err);
+                            fileHandle = null;
+                            fileWriter = null;
+                            fileStream = null;
+                        }
+                    }
                 } else if (msg.type === 'file-end') {
                     if (receivingFile) {
                         // Finalize file
-                        const blob = new Blob(receivedChunks, { type: receivingFile.mime });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = receivingFile.name;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        console.log('File downloaded:', receivingFile.name);
+                        if (fileWriter) {
+                            await fileWriter.close();
+                            await fileStream.close();
+                            console.log('File saved via streaming:', receivingFile.name);
+                            fileWriter = null;
+                            fileStream = null;
+                            fileHandle = null;
+                        } else {
+                            // Fallback to blob download
+                            const blob = new Blob(receivedChunks, { type: receivingFile.mime });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = receivingFile.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            console.log('File downloaded via blob:', receivingFile.name);
+                        }
                         receivingFile = null;
                         receivedChunks = [];
+                        receivedSize = 0;
                     }
                 }
             } catch (e) {
@@ -169,7 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (data instanceof ArrayBuffer) {
             // Binary chunk
             if (receivingFile) {
-                receivedChunks.push(data);
+                if (fileWriter) {
+                    // Write chunk to stream
+                    await fileWriter.write(new Uint8Array(data));
+                } else {
+                    receivedChunks.push(data);
+                }
                 receivedSize += data.byteLength;
                 const percent = receivingFile.size ? (receivedSize / receivingFile.size) * 100 : 0;
                 showProgress(percent);
