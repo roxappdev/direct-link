@@ -15,6 +15,39 @@
             <p class="subtitle">One‑click direct file transfer between computers. No server storage, fully peer‑to‑peer.</p>
         </header>
 
+        <div class="instruction-card card">
+            <h2><i class="fas fa-info-circle"></i> How to Use</h2>
+            <ol class="instruction-list">
+                <li><strong>Create a Share Link</strong> – Click "Generate Link" to create a unique URL. Send this link to your recipient.</li>
+                <li><strong>Wait for Connection</strong> – Once the recipient opens the link, a direct peer‑to‑peer connection will be established automatically.</li>
+                <li><strong>Send Files</strong> – After connection, select files and click "Send Selected Files". The files will be transferred directly to the other computer.</li>
+                <li><strong>Receive Files</strong> – Incoming files will appear under "Received Files" and will be saved to your downloads.</li>
+            </ol>
+            <p class="small">No registration, no server storage, fully secure using WebRTC.</p>
+        </div>
+
+        <div class="card connection-status-card">
+            <h2><i class="fas fa-exchange-alt"></i> Connection Status</h2>
+            <div class="connection-info">
+                <div class="info-row">
+                    <span>Peer ID:</span>
+                    <span id="peerId">Not connected</span>
+                </div>
+                <div class="info-row">
+                    <span>Channel:</span>
+                    <span id="channelStatus" class="badge offline">Offline</span>
+                </div>
+                <div class="info-row">
+                    <span>Files transferred:</span>
+                    <span id="filesTransferred">0</span>
+                </div>
+            </div>
+            <div class="progress-container hidden">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+        </div>
+
         <main>
             <div class="card">
                 <h2><i class="fas fa-link"></i> Create a Share Link</h2>
@@ -41,22 +74,6 @@
             </div>
 
             <div class="card">
-                <h2><i class="fas fa-user-plus"></i> Join a Share</h2>
-                <p>If you received a link, paste it below to join the peer‑to‑peer session.</p>
-                <div class="input-group">
-                    <input type="text" id="roomIdInput" placeholder="e.g. a1b2c3d4">
-                    <button id="joinRoomBtn" class="btn secondary">
-                        <i class="fas fa-sign-in-alt"></i> Join
-                    </button>
-                </div>
-                <div id="joinStatus" class="hidden">
-                    <div class="status connecting">
-                        <i class="fas fa-sync-alt fa-spin"></i> Connecting to peer…
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
                 <h2><i class="fas fa-file-import"></i> Send Files</h2>
                 <p>Select files to send directly to the connected peer. Files are transferred over a secure WebRTC channel.</p>
                 <div class="file-upload">
@@ -72,28 +89,6 @@
             </div>
 
             <div class="card">
-                <h2><i class="fas fa-exchange-alt"></i> Connection Status</h2>
-                <div class="connection-info">
-                    <div class="info-row">
-                        <span>Peer ID:</span>
-                        <span id="peerId">Not connected</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Channel:</span>
-                        <span id="channelStatus" class="badge offline">Offline</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Files transferred:</span>
-                        <span id="filesTransferred">0</span>
-                    </div>
-                </div>
-                <div class="progress-container hidden">
-                    <div class="progress-bar" id="progressBar"></div>
-                    <div class="progress-text" id="progressText">0%</div>
-                </div>
-            </div>
-
-            <div class="card">
                 <h2><i class="fas fa-inbox"></i> Received Files</h2>
                 <p>Files sent by the peer will appear here. They are saved directly to your computer.</p>
                 <div id="receivedFiles" class="received-list">
@@ -102,16 +97,7 @@
             </div>
         </main>
 
-        <footer>
-            <p>
-                <i class="fas fa-info-circle"></i>
-                This service uses WebRTC for direct browser‑to‑browser transfer. No files are stored on any server.
-                Works in modern browsers (Chrome, Firefox, Edge, Safari).
-            </p>
-            <p class="copyright">
-                &copy; 2023 P2P File Share | Made with <i class="fas fa-heart"></i> for seamless sharing
-            </p>
-        </footer>
+        <!-- Footer removed -->
     </div>
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>

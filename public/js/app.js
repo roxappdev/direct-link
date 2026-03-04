@@ -13,9 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyLinkBtn = document.getElementById('copyLinkBtn');
     const shareBtn = document.getElementById('shareBtn');
     const statusText = document.getElementById('statusText');
-    const roomIdInput = document.getElementById('roomIdInput');
-    const joinRoomBtn = document.getElementById('joinRoomBtn');
-    const joinStatus = document.getElementById('joinStatus');
     const fileInput = document.getElementById('fileInput');
     const sendFilesBtn = document.getElementById('sendFilesBtn');
     const fileList = document.getElementById('fileList');
@@ -99,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         peer.on('error', (err) => {
             console.error('Peer error:', err);
-            alert('PeerJS error: ' + err.message);
+            // No alert, just log
         });
     }
 
@@ -117,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         conn.on('close', () => {
             console.log('Connection closed');
             updateConnectionStatus(false);
-            alert('Peer disconnected.');
+            // No alert
             conn = null;
         });
         conn.on('error', (err) => {
@@ -223,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Send file metadata
     function sendFileMetadata(file) {
         if (!conn || !conn.open) {
-            alert('Not connected to a peer.');
+            console.warn('Not connected to a peer.');
             return;
         }
         const metadata = {
@@ -282,37 +279,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Join room
-    joinRoomBtn.addEventListener('click', () => {
-        const peerId = roomIdInput.value.trim();
-        if (!peerId) {
-            alert('Please enter a peer ID');
-            return;
-        }
+    // Join room function (used for URL parameter)
+    function joinRoom(peerId) {
+        if (!peerId) return;
         initPeer(); // we need our own peer ID
-        joinStatus.classList.remove('hidden');
         peer.on('open', (myId) => {
             console.log('Connecting to ' + peerId);
             const connection = peer.connect(peerId, {
                 reliable: true
             });
             connection.on('open', () => {
-                joinStatus.classList.add('hidden');
                 handleConnection(connection);
-                alert(`Connected to peer ${peerId}`);
+                // No alert
             });
             connection.on('error', (err) => {
-                alert('Connection failed: ' + err.message);
-                joinStatus.classList.add('hidden');
+                console.error('Connection failed:', err);
+                // No alert
             });
         });
-    });
+    }
 
     // Copy link
     copyLinkBtn.addEventListener('click', () => {
         roomLink.select();
         document.execCommand('copy');
-        alert('Link copied to clipboard!');
+        // No alert, maybe show a temporary feedback in UI (optional)
+        const originalText = copyLinkBtn.innerHTML;
+        copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+            copyLinkBtn.innerHTML = originalText;
+        }, 2000);
     });
 
     // Share via WhatsApp
@@ -357,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Send files
     sendFilesBtn.addEventListener('click', async () => {
         if (!conn || !conn.open) {
-            alert('Not connected to a peer. Please wait for connection.');
+            console.warn('Not connected to a peer. Please wait for connection.');
             return;
         }
         for (const file of selectedFiles) {
@@ -369,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideProgress();
             } catch (err) {
                 console.error('Error sending file:', err);
-                alert(`Failed to send ${file.name}: ${err.message}`);
+                // No alert
             }
         }
         selectedFiles = [];
@@ -381,10 +377,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const roomParam = urlParams.get('room');
     if (roomParam) {
-        roomIdInput.value = roomParam;
         // Auto-join after a short delay to allow peer initialization
         setTimeout(() => {
-            joinRoomBtn.click();
+            joinRoom(roomParam);
         }, 500);
     }
 });

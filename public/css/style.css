@@ -7,8 +7,8 @@
 }
 
 body {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    color: #f0f0f0;
+    background: #ffffff;
+    color: #333333;
     min-height: 100vh;
     padding: 20px;
     line-height: 1.6;
@@ -20,21 +20,20 @@ body {
     padding: 20px;
 }
 
-/* Header */
+/* Header - no border */
 header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     padding: 30px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8f9fa;
     border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 header h1 {
     font-size: 3rem;
     margin-bottom: 10px;
-    background: linear-gradient(90deg, #00dbde, #fc00ff);
+    background: linear-gradient(90deg, #4776E6, #8E54E9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -45,24 +44,42 @@ header h1 {
 
 .subtitle {
     font-size: 1.2rem;
-    opacity: 0.9;
+    color: #666;
     max-width: 800px;
     margin: 0 auto;
 }
 
+/* Instruction card */
+.instruction-card {
+    background: #e3f2fd;
+    border-left: 6px solid #2196f3;
+    margin-bottom: 25px;
+}
+
+.instruction-list {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.instruction-list li {
+    margin-bottom: 10px;
+    color: #444;
+}
+
 /* Cards */
 .card {
-    background: rgba(255, 255, 255, 0.08);
+    background: #ffffff;
     border-radius: 16px;
     padding: 25px;
     margin-bottom: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #e0e0e0;
     transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
 .card h2 {
@@ -71,12 +88,18 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #6ee7b7;
+    color: #2d3748;
 }
 
 .card p {
     margin-bottom: 20px;
-    opacity: 0.9;
+    color: #555;
+}
+
+/* Connection Status card - no border */
+.connection-status-card {
+    border: none;
+    background: #f1f8ff;
 }
 
 /* Buttons */
@@ -105,19 +128,20 @@ header h1 {
 }
 
 .btn.secondary {
-    background: rgba(255, 255, 255, 0.15);
+    background: #6c757d;
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #6c757d;
 }
 
 .btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: #5a6268;
 }
 
 .btn.icon {
     padding: 10px 15px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #e9ecef;
+    color: #495057;
 }
 
 .btn.upload {
@@ -146,8 +170,8 @@ header h1 {
     padding: 15px;
     border-radius: 10px;
     border: 2px solid #4776E6;
-    background: rgba(0, 0, 0, 0.3);
-    color: white;
+    background: #f8f9fa;
+    color: #333;
     font-family: 'Roboto Mono', monospace;
     font-size: 1rem;
 }
@@ -163,13 +187,15 @@ header h1 {
 }
 
 .status.waiting {
-    background: rgba(255, 193, 7, 0.2);
+    background: #fff3cd;
     border-left: 5px solid #ffc107;
+    color: #856404;
 }
 
 .status.connecting {
-    background: rgba(3, 169, 244, 0.2);
-    border-left: 5px solid #03a9f4;
+    background: #d1ecf1;
+    border-left: 5px solid #17a2b8;
+    color: #0c5460;
 }
 
 /* Input group */
@@ -183,9 +209,9 @@ header h1 {
     flex: 1;
     padding: 15px;
     border-radius: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    border: 2px solid #ced4da;
+    background: #ffffff;
+    color: #333;
     font-size: 1rem;
 }
 
@@ -203,28 +229,35 @@ header h1 {
 }
 
 .file-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8f9fa;
     border-radius: 10px;
     padding: 15px;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: 1px solid #e9ecef;
 }
 
 /* Connection info */
 .connection-info {
-    background: rgba(0, 0, 0, 0.3);
+    background: #f8f9fa;
     border-radius: 10px;
     padding: 20px;
     margin-top: 15px;
+    border: 1px solid #e9ecef;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #dee2e6;
+    color: #495057;
+}
+
+.info-row:last-child {
+    border-bottom: none;
 }
 
 .badge {
@@ -247,9 +280,10 @@ header h1 {
 /* Progress */
 .progress-container {
     margin-top: 20px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8f9fa;
     border-radius: 10px;
     padding: 15px;
+    border: 1px solid #e9ecef;
 }
 
 .progress-bar {
@@ -264,41 +298,28 @@ header h1 {
     text-align: center;
     margin-top: 10px;
     font-weight: bold;
+    color: #333;
 }
 
 /* Received files */
 .received-list {
     min-height: 100px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8f9fa;
     border-radius: 10px;
     padding: 20px;
     margin-top: 15px;
+    border: 1px solid #e9ecef;
 }
 
 .received-item {
-    background: rgba(255, 255, 255, 0.1);
+    background: #ffffff;
     border-radius: 10px;
     padding: 15px;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-/* Footer */
-footer {
-    margin-top: 40px;
-    text-align: center;
-    padding: 25px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    font-size: 0.95rem;
-    opacity: 0.8;
-}
-
-.copyright {
-    margin-top: 15px;
-    font-size: 0.9rem;
+    border: 1px solid #e9ecef;
 }
 
 /* Utilities */
@@ -308,12 +329,12 @@ footer {
 
 .small {
     font-size: 0.9rem;
-    opacity: 0.7;
+    color: #6c757d;
 }
 
 .empty {
     text-align: center;
-    opacity: 0.6;
+    color: #6c757d;
     font-style: italic;
 }
 
